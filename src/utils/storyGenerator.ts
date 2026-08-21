@@ -1,6 +1,17 @@
 import { Chapter, EventType, Layout, MediaItem, MemoryStory, Scene, ThemeStyle } from '../types';
 import { getEventPreset, getQuotesForEvent } from '../data/quotes';
 
+/** Shuffle an array in‑place using Fisher–Yates and return the shuffled copy. */
+function shuffleArray<T>(array: T[]): T[] {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+
 interface StoryGenerationOptions {
   theme?: ThemeStyle;
   eventType?: EventType;
@@ -97,8 +108,8 @@ export function generateComprehensiveStory(
   const availableMedia = mediaList.filter((m) => m.selected !== false);
   const mediaToUse = availableMedia.length > 0 ? availableMedia : mediaList;
 
-  // Quotes pool for selected event
-  const quotesPool = getQuotesForEvent(eventType);
+  // Quotes pool for selected event (shuffled for random assignment)
+  const quotesPool = shuffleArray(getQuotesForEvent(eventType));
 
   const scenes: Scene[] = [];
   let mediaPointer = 0;

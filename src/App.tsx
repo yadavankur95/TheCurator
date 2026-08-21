@@ -4,21 +4,17 @@ import {
   CircleUserRound,
   CloudUpload,
   FolderUp,
-  Heart,
   Image as ImageIcon,
   Menu,
-  Play,
-  RotateCcw,
-  Sparkles,
-  Sliders,
-  Video,
+  // Unused icons removed: Heart, Play, RotateCcw, Sparkles, Sliders, Video
 } from 'lucide-react';
-
 import { MediaItem, MemoryStory, ThemeStyle, View, EventType } from './types';
 import { generateComprehensiveStory } from './utils/storyGenerator';
 import { MemoryWebsite } from './components/MemoryWebsite';
 import { SlideshowPlayer } from './components/SlideshowPlayer';
-import { StoryStudio } from './components/StoryStudio';
+import { loadMedia, saveMedia, loadStory, saveStory, revokeAllMediaUrls } from './persistence';
+
+
 
 const demoImages = [
   'https://images.pexels.com/photos/7328125/pexels-photo-7328125.jpeg?auto=compress&cs=tinysrgb&w=1600',
@@ -94,16 +90,35 @@ export default function App() {
   const [playerStartIndex, setPlayerStartIndex] = useState(0);
   const [uploadProgress, setUploadProgress] = useState<{ total: number; done: number } | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
 
-  // Generate full story accommodating all media
-  const [story, setStory] = useState<MemoryStory>(() =>
-    generateComprehensiveStory(initialDemoCollection, { variation: 0, theme: 'Birthday', eventType: 'mother-daughter-birthday' })
-  );
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
+  // Persist media whenever it changes
+  useEffect(() => {
+    saveMedia(media);
+  }, [media]);
+
+
+
+  const [story, setStory] = useState<MemoryStory>(() => {
+    // If persisted story is loaded above, this initializer will be overridden
+    return generateComprehensiveStory(initialDemoCollection, { variation: 0, theme: 'Birthday', eventType: 'mother-daughter-birthday' });
+  });
+
+
+
+
+
 
   const imageCount = useMemo(() => media.filter((m) => m.type === 'image').length, [media]);
   const videoCount = useMemo(() => media.filter((m) => m.type === 'video').length, [media]);
+
+  // Persist story whenever it changes
+  useEffect(() => {
+    if (story) saveStory(story);
+  }, [story]);
 
   // Read video durations and metadata accurately when files are uploaded
   useEffect(() => {
@@ -158,11 +173,11 @@ export default function App() {
     setView('processing');
 
     const nextMedia: MediaItem[] = fileArray.map((file, index) => {
-      const isVideo = file.type.startsWith('video') || file.name.match(/\.(mp4|mov|webm|avi|m4v)$/i) !== null;
+      const isVideo = file.type.startsWith('video') || file.name.match(/\.(mp4|mov|webm|avi)$/i) !== null;
       const url = URL.createObjectURL(file);
       const isPortrait = index % 3 === 0;
 
-      return {
+      const item: MediaItem = {
         id: `upload-${index}-${Date.now()}-${file.name}`,
         type: isVideo ? 'video' : 'image',
         url,
@@ -176,8 +191,12 @@ export default function App() {
         qualityScore: 0.95 - (index % 20) * 0.01,
         selected: true,
         alt: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
-      };
+      } as MediaItem;
+      // Attach the original Blob for persistence
+      (item as any).file = file;
+      return item;
     });
+
 
     setMedia(nextMedia);
 
