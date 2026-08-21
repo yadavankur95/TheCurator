@@ -6,12 +6,14 @@ import {
   FolderUp,
   Image as ImageIcon,
   Menu,
-  // Unused icons removed: Heart, Play, RotateCcw, Sparkles, Sliders, Video
+  Sparkles,
+  // Unused icons removed: Heart, Play, RotateCcw, Sliders, Video
 } from 'lucide-react';
 import { MediaItem, MemoryStory, ThemeStyle, View, EventType } from './types';
 import { generateComprehensiveStory } from './utils/storyGenerator';
 import { MemoryWebsite } from './components/MemoryWebsite';
 import { SlideshowPlayer } from './components/SlideshowPlayer';
+import { StoryStudio } from './components/StoryStudio';
 import { loadMedia, saveMedia, loadStory, saveStory, revokeAllMediaUrls } from './persistence';
 
 
